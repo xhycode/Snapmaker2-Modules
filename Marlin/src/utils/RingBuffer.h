@@ -41,7 +41,8 @@ class RingBuffer {
   bool insert(const T& element);
   T& remove();
   T& peek();
-
+  void init(int size);
+  void deinit();
 
  private:
   int32_t size;
@@ -49,8 +50,7 @@ class RingBuffer {
   int32_t tail;
   T * data;
 
-  void init(int size);
-  void deinit();
+  
 };
 
 
