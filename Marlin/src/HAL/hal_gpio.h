@@ -22,6 +22,12 @@
 #define GPIO_H
 #include "std_library/inc/stm32f10x.h"
 
+enum {
+  PA_0, PA_1, PA_2, PA_3, PA_4, PA_5, PA_6, PA_7, PA_8, PA_9, PA_10, PA_11, PA_12, PA_13,PA_14,PA_15,
+  PB_0, PB_1, PB_2, PB_3, PB_4, PB_5, PB_6, PB_7,
+  Pxx,
+};
+
 void GpioRemap(void);
 void GpioInit(uint8_t Port, GPIOMode_TypeDef Mode);
 void GpioWrite(uint8_t Port, uint8_t IOLevel);

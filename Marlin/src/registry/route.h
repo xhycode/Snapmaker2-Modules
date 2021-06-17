@@ -38,6 +38,7 @@
 #include "src/module/purifier_module.h"
 #include "src/module/stop_module.h"
 #include "src/module/rotate_module.h"
+#include "src/module/power_module.h"
 class Route {
  public:
   void Invoke();

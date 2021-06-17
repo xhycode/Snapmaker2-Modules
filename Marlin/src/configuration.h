@@ -93,6 +93,7 @@ typedef enum {
   MODULE_PRINT_V_SM1       = 10, // 10
   MODULE_FAN               = 11, // 11
   MODULE_LINEAR_TMC        = 12, // 12
+  MODULE_POWER             = 13, // 13
 } MODULE_TYPE;
 
 

@@ -141,6 +141,10 @@ void Route::Init() {
       module_ = new RotateModule;
       module_->Init();
       break;
+    case MODULE_POWER:
+      module_ = new PowerModule;
+      module_->Init();
+      break;
   }
 }
 

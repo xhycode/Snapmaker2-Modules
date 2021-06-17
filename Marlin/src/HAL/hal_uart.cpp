@@ -1,6 +1,7 @@
 #include "./hal_uart.h"
 #include "./hal_gpio.h"
-#include "src/HAL/std_library/inc/stm32f10x.h"
+#include "std_library/inc/stm32f10x.h"
+#include "../utils/RingBuffer.h"
 
 const USART_TypeDef *usarts[] = {
     USART1,
@@ -29,19 +30,18 @@ const USART_PIN_T usarts_pin[] = {
 
 static RingBuffer<uint8_t> recv_buffer[USART_INVALID];
 
-ErrCode HalUart::Init(uint8_t usart, uint32_t baudrate, uint32_t buf_size) {
+void HalUart::Init(uint8_t usart, uint32_t baudrate, uint32_t buf_size) {
   USART_InitTypeDef USART_InitStruct;
   if (usart < USART_INVALID) {
     port_ = usart;
     SetBufSize(buf_size);
   } else {
     port_ = USART_INVALID;
-    return E_PARAM;
   }
   USART_DeInit((USART_TypeDef *)usarts[port_]);
 
-  HalGPIO::StaticInit(usarts_pin[port_].tx, GPIO_AF_PP);
-  HalGPIO::StaticInit(usarts_pin[port_].rx, GPIO_IN_FLOATING);
+  GpioInit(usarts_pin[port_].tx, GPIO_Mode_AF_PP);
+  GpioInit(usarts_pin[port_].rx, GPIO_Mode_IN_FLOATING);
 
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
   if (port_ == USART_1)
@@ -63,22 +63,18 @@ ErrCode HalUart::Init(uint8_t usart, uint32_t baudrate, uint32_t buf_size) {
   USART_ITConfig((USART_TypeDef *)usarts[port_], USART_IT_RXNE, ENABLE);
 
   SetNVIC(1, 1);
-  return E_SUCCESS;
 }
 
-ErrCode HalUart::SetBufSize(uint32_t size) {
+void HalUart::SetBufSize(uint32_t size) {
   if (port_ < USART_INVALID) {
     recv_buffer[port_].deinit();
     recv_buffer[port_].init(size);
-    return E_SUCCESS;
   }
-  return E_FAILURE;
 }
 
-ErrCode HalUart::SetNVIC(uint8_t PreemptionPriority, uint8_t SubPriority) {
+void HalUart::SetNVIC(uint8_t PreemptionPriority, uint8_t SubPriority) {
   NVIC_InitTypeDef NVicInit;
   if (port_ >= USART_INVALID) {
-    return E_PARAM;
   }
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
   NVicInit.NVIC_IRQChannelPreemptionPriority = PreemptionPriority;
@@ -86,36 +82,32 @@ ErrCode HalUart::SetNVIC(uint8_t PreemptionPriority, uint8_t SubPriority) {
   NVicInit.NVIC_IRQChannelSubPriority = SubPriority;
   NVicInit.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVicInit);
-  return E_SUCCESS;
 }
 
-ErrCode HalUart::PutC(unsigned char c) {
+void HalUart::PutC(unsigned char c) {
   if (port_ >= USART_INVALID) {
-    return E_PARAM;
   }
   USART_SendData((USART_TypeDef *)usarts[port_], c);
   while (USART_GetFlagStatus((USART_TypeDef *)usarts[port_], USART_FLAG_TXE) == RESET);
-  return E_SUCCESS;
 }
 
-int32_t HalUart::Puts(unsigned char *str, int lenght) {
-  int32_t i;
+void HalUart::Puts(uint8_t *str, size_t lenght) {
+  uint32_t i;
   if (port_ >= USART_INVALID) {
-    return -1;
+    return;
   }
   for (i = 0; i < lenght; i++) {
     USART_SendData((USART_TypeDef *)usarts[port_], *str++);
     while (USART_GetFlagStatus((USART_TypeDef *)usarts[port_], USART_FLAG_TXE) == RESET);
   }
-  return i;
 }
 
-ErrCode HalUart::GetC(uint8_t &out) {
+bool HalUart::GetC(uint8_t &out) {
   if (!recv_buffer[port_].isEmpty()) {
     out = recv_buffer[port_].remove();
-    return E_SUCCESS;
+    return true;
   }
-  return E_FAILURE;
+  return false;
 }
 
 extern "C"
